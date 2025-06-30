@@ -1,170 +1,62 @@
-/*!
- * bytes
- * Copyright(c) 2012-2014 TJ Holowaychuk
- * Copyright(c) 2015 Jed Watson
- * MIT Licensed
- */
-
-'use strict';
-
 /**
- * Module exports.
- * @public
+ * @fileoverview Main entrypoint for libraries using yargs-parser in Node.js
+ * CJS and ESM environments.
+ *
+ * @license
+ * Copyright (c) 2016, Contributors
+ * SPDX-License-Identifier: ISC
  */
-
-module.exports = bytes;
-module.exports.format = format;
-module.exports.parse = parse;
-
-/**
- * Module variables.
- * @private
- */
-
-var formatThousandsRegExp = /\B(?=(\d{3})+(?!\d))/g;
-
-var formatDecimalsRegExp = /(?:\.0*|(\.[^0]+)0+)$/;
-
-var map = {
-  b:  1,
-  kb: 1 << 10,
-  mb: 1 << 20,
-  gb: 1 << 30,
-  tb: Math.pow(1024, 4),
-  pb: Math.pow(1024, 5),
-};
-
-var parseRegExp = /^((-|\+)?(\d+(?:\.\d+)?)) *(kb|mb|gb|tb|pb)$/i;
-
-/**
- * Convert the given value in bytes into a string or parse to string to an integer in bytes.
- *
- * @param {string|number} value
- * @param {{
- *  case: [string],
- *  decimalPlaces: [number]
- *  fixedDecimals: [boolean]
- *  thousandsSeparator: [string]
- *  unitSeparator: [string]
- *  }} [options] bytes options.
- *
- * @returns {string|number|null}
- */
-
-function bytes(value, options) {
-  if (typeof value === 'string') {
-    return parse(value);
-  }
-
-  if (typeof value === 'number') {
-    return format(value, options);
-  }
-
-  return null;
-}
-
-/**
- * Format the given value in bytes into a string.
- *
- * If the value is negative, it is kept as such. If it is a float,
- * it is rounded.
- *
- * @param {number} value
- * @param {object} [options]
- * @param {number} [options.decimalPlaces=2]
- * @param {number} [options.fixedDecimals=false]
- * @param {string} [options.thousandsSeparator=]
- * @param {string} [options.unit=]
- * @param {string} [options.unitSeparator=]
- *
- * @returns {string|null}
- * @public
- */
-
-function format(value, options) {
-  if (!Number.isFinite(value)) {
-    return null;
-  }
-
-  var mag = Math.abs(value);
-  var thousandsSeparator = (options && options.thousandsSeparator) || '';
-  var unitSeparator = (options && options.unitSeparator) || '';
-  var decimalPlaces = (options && options.decimalPlaces !== undefined) ? options.decimalPlaces : 2;
-  var fixedDecimals = Boolean(options && options.fixedDecimals);
-  var unit = (options && options.unit) || '';
-
-  if (!unit || !map[unit.toLowerCase()]) {
-    if (mag >= map.pb) {
-      unit = 'PB';
-    } else if (mag >= map.tb) {
-      unit = 'TB';
-    } else if (mag >= map.gb) {
-      unit = 'GB';
-    } else if (mag >= map.mb) {
-      unit = 'MB';
-    } else if (mag >= map.kb) {
-      unit = 'KB';
-    } else {
-      unit = 'B';
+var _a, _b, _c;
+import { format } from 'util';
+import { normalize, resolve } from 'path';
+import { camelCase, decamelize, looksLikeNumber } from './string-utils.js';
+import { YargsParser } from './yargs-parser.js';
+import { readFileSync } from 'fs';
+// See https://github.com/yargs/yargs-parser#supported-nodejs-versions for our
+// version support policy. The YARGS_MIN_NODE_VERSION is used for testing only.
+const minNodeVersion = (process && process.env && process.env.YARGS_MIN_NODE_VERSION)
+    ? Number(process.env.YARGS_MIN_NODE_VERSION)
+    : 12;
+const nodeVersion = (_b = (_a = process === null || process === void 0 ? void 0 : process.versions) === null || _a === void 0 ? void 0 : _a.node) !== null && _b !== void 0 ? _b : (_c = process === null || process === void 0 ? void 0 : process.version) === null || _c === void 0 ? void 0 : _c.slice(1);
+if (nodeVersion) {
+    const major = Number(nodeVersion.match(/^([^.]+)/)[1]);
+    if (major < minNodeVersion) {
+        throw Error(`yargs parser supports a minimum Node.js version of ${minNodeVersion}. Read our version support policy: https://github.com/yargs/yargs-parser#supported-nodejs-versions`);
     }
-  }
-
-  var val = value / map[unit.toLowerCase()];
-  var str = val.toFixed(decimalPlaces);
-
-  if (!fixedDecimals) {
-    str = str.replace(formatDecimalsRegExp, '$1');
-  }
-
-  if (thousandsSeparator) {
-    str = str.split('.').map(function (s, i) {
-      return i === 0
-        ? s.replace(formatThousandsRegExp, thousandsSeparator)
-        : s
-    }).join('.');
-  }
-
-  return str + unitSeparator + unit;
 }
-
-/**
- * Parse the string value into an integer in bytes.
- *
- * If no unit is given, it is assumed the value is in bytes.
- *
- * @param {number|string} val
- *
- * @returns {number|null}
- * @public
- */
-
-function parse(val) {
-  if (typeof val === 'number' && !isNaN(val)) {
-    return val;
-  }
-
-  if (typeof val !== 'string') {
-    return null;
-  }
-
-  // Test if the string passed is valid
-  var results = parseRegExp.exec(val);
-  var floatValue;
-  var unit = 'b';
-
-  if (!results) {
-    // Nothing could be extracted from the given string
-    floatValue = parseInt(val, 10);
-    unit = 'b'
-  } else {
-    // Retrieve the value and the unit
-    floatValue = parseFloat(results[1]);
-    unit = results[4].toLowerCase();
-  }
-
-  if (isNaN(floatValue)) {
-    return null;
-  }
-
-  return Math.floor(map[unit] * floatValue);
-}
+// Creates a yargs-parser instance using Node.js standard libraries:
+const env = process ? process.env : {};
+const parser = new YargsParser({
+    cwd: process.cwd,
+    env: () => {
+        return env;
+    },
+    format,
+    normalize,
+    resolve,
+    // TODO: figure  out a  way to combine ESM and CJS coverage, such  that
+    // we can exercise all the lines below:
+    require: (path) => {
+        if (typeof require !== 'undefined') {
+            return require(path);
+        }
+        else if (path.match(/\.json$/)) {
+            // Addresses: https://github.com/yargs/yargs/issues/2040
+            return JSON.parse(readFileSync(path, 'utf8'));
+        }
+        else {
+            throw Error('only .json config files are supported in ESM');
+        }
+    }
+});
+const yargsParser = function Parser(args, opts) {
+    const result = parser.parse(args.slice(), opts);
+    return result.argv;
+};
+yargsParser.detailed = function (args, opts) {
+    return parser.parse(args.slice(), opts);
+};
+yargsParser.camelCase = camelCase;
+yargsParser.decamelize = decamelize;
+yargsParser.looksLikeNumber = looksLikeNumber;
+export default yargsParser;

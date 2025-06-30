@@ -1,42 +1,92 @@
 {
-  "name": "bytes",
-  "description": "Utility to parse a string bytes to bytes and vice-versa",
-  "version": "3.1.2",
-  "author": "TJ Holowaychuk <tj@vision-media.ca> (http://tjholowaychuk.com)",
-  "contributors": [
-    "Jed Watson <jed.watson@me.com>",
-    "Théo FIDRY <theo.fidry@gmail.com>"
-  ],
-  "license": "MIT",
+  "name": "yargs-parser",
+  "version": "21.1.1",
+  "description": "the mighty option parser used by yargs",
+  "main": "build/index.cjs",
+  "exports": {
+    ".": [
+      {
+        "import": "./build/lib/index.js",
+        "require": "./build/index.cjs"
+      },
+      "./build/index.cjs"
+    ],
+    "./browser": [
+      "./browser.js"
+    ]
+  },
+  "type": "module",
+  "module": "./build/lib/index.js",
+  "scripts": {
+    "check": "standardx '**/*.ts' && standardx '**/*.js' && standardx '**/*.cjs'",
+    "fix": "standardx --fix '**/*.ts' && standardx --fix '**/*.js' && standardx --fix '**/*.cjs'",
+    "pretest": "rimraf build && tsc -p tsconfig.test.json && cross-env NODE_ENV=test npm run build:cjs",
+    "test": "c8 --reporter=text --reporter=html mocha test/*.cjs",
+    "test:esm": "c8 --reporter=text --reporter=html mocha test/*.mjs",
+    "test:browser": "start-server-and-test 'serve ./ -p 8080' http://127.0.0.1:8080/package.json 'node ./test/browser/yargs-test.cjs'",
+    "pretest:typescript": "npm run pretest",
+    "test:typescript": "c8 mocha ./build/test/typescript/*.js",
+    "coverage": "c8 report --check-coverage",
+    "precompile": "rimraf build",
+    "compile": "tsc",
+    "postcompile": "npm run build:cjs",
+    "build:cjs": "rollup -c",
+    "prepare": "npm run compile"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yargs/yargs-parser.git"
+  },
   "keywords": [
-    "byte",
-    "bytes",
-    "utility",
-    "parse",
+    "argument",
     "parser",
-    "convert",
-    "converter"
+    "yargs",
+    "command",
+    "cli",
+    "parsing",
+    "option",
+    "args",
+    "argument"
   ],
-  "repository": "visionmedia/bytes.js",
+  "author": "Ben Coe <ben@npmjs.com>",
+  "license": "ISC",
   "devDependencies": {
-    "eslint": "7.32.0",
-    "eslint-plugin-markdown": "2.2.1",
-    "mocha": "9.2.0",
-    "nyc": "15.1.0"
+    "@types/chai": "^4.2.11",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^16.11.4",
+    "@typescript-eslint/eslint-plugin": "^3.10.1",
+    "@typescript-eslint/parser": "^3.10.1",
+    "c8": "^7.3.0",
+    "chai": "^4.2.0",
+    "cross-env": "^7.0.2",
+    "eslint": "^7.0.0",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-node": "^11.0.0",
+    "gts": "^3.0.0",
+    "mocha": "^10.0.0",
+    "puppeteer": "^16.0.0",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.22.1",
+    "rollup-plugin-cleanup": "^3.1.1",
+    "rollup-plugin-ts": "^3.0.2",
+    "serve": "^14.0.0",
+    "standardx": "^7.0.0",
+    "start-server-and-test": "^1.11.2",
+    "ts-transform-default-export": "^1.0.2",
+    "typescript": "^4.0.0"
   },
   "files": [
-    "History.md",
-    "LICENSE",
-    "Readme.md",
-    "index.js"
+    "browser.js",
+    "build",
+    "!*.d.ts",
+    "!*.d.cts"
   ],
   "engines": {
-    "node": ">= 0.8"
+    "node": ">=12"
   },
-  "scripts": {
-    "lint": "eslint .",
-    "test": "mocha --check-leaks --reporter spec",
-    "test-ci": "nyc --reporter=lcov --reporter=text npm test",
-    "test-cov": "nyc --reporter=html --reporter=text npm test"
+  "standardx": {
+    "ignore": [
+      "build"
+    ]
   }
 }
